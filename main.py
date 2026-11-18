@@ -92,13 +92,24 @@ def main():
     conn.commit()
 
     print("スクレイピングを開始します...\n")
+    
     page = 1
+    retry = 0
     while True:
         try:
             repos = get_repos(page)
         except requests.exceptions.RequestException as e:
+            # アクセスしすぎでエラーになることがあるので、少し待ってやり直す
             print("HTTP エラーが発生しました:", e)
-            break
+            retry += 1
+            if retry > 3:
+                print("3 回やり直しても失敗したので終了します")
+                break
+            print("30 秒待ってから、もう一度", page, "ページ目を取得します")
+            time.sleep(30)
+            continue
+
+        retry = 0
 
         # データがなくなったら最後のページ
         if len(repos) == 0:
